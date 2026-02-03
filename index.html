@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POL-DRIVE 22.12 | SYSTEM OPERACYJNY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=JetBrains+Mono&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f1f5f9; min-height: 100vh; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .hidden { display: none !important; }
+        input, select, textarea { font-family: 'JetBrains Mono', monospace; background: rgba(0,0,0,0.5) !important; border: 1px solid #1e293b !important; color: white !important; outline: none; width: 100%; padding: 12px; border-radius: 12px; }
+        input:focus, select:focus { border-color: #3b82f6 !important; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+        .tab-active { color: #3b82f6; border-bottom: 2px solid #3b82f6; font-weight: 900; }
+        .wanted-alert { border: 4px solid #ef4444 !important; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 40px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        option { background: #0f172a; color: white; padding: 10px; }
+        optgroup { background: #1e293b; color: #3b82f6; font-weight: bold; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <div id="auth-screen" class="min-h-screen flex flex-col items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900 to-black">
+        <div class="glass p-10 rounded-[3rem] w-full max-w-md shadow-2xl mb-6 text-center">
+            <h1 class="text-4xl font-black italic text-white tracking-tighter mb-10">POL-DRIVE<span class="text-blue-500">22.12</span></h1>
+            <div id="login-form" class="space-y-4">
+                <input type="text" id="login-user" placeholder="ID Funkcjonariusza">
+                <input type="password" id="login-pass" placeholder="Klucz dostępu">
+                <button onclick="loginOfficer()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20">Autoryzuj</button>
+                <button onclick="toggleAuth(true)" class="text-[10px] opacity-40 font-bold uppercase mt-4 block mx-auto tracking-[0.3em]">Rejestracja Systemu</button>
+            </div>
+            <div id="register-form" class="hidden space-y-4">
+                <input type="text" id="reg-user" placeholder="Login">
+                <input type="password" id="reg-pass" placeholder="Hasło">
+                <input type="password" id="reg-unit-code" placeholder="KOD JEDNOSTKI">
+                <button onclick="registerOfficer()" class="w-full bg-emerald-600 py-4 rounded-2xl font-black uppercase">Utwórz konto</button>
+                <button onclick="toggleAuth(false)" class="text-[10px] opacity-40 font-bold uppercase mt-2 block mx-auto">Cofnij</button>
+            </div>
+        </div>
+
+        <div class="glass p-8 rounded-[2rem] w-full max-w-md border-t-4 border-blue-500 shadow-xl">
+            <h3 class="text-center font-black uppercase text-[10px] mb-4 text-blue-400 tracking-widest">Weryfikacja Obywatelska (PESEL)</h3>
+            <div class="flex gap-2">
+                <input type="text" id="citizen-pesel-check" placeholder="Wpisz swój PESEL">
+                <button onclick="citizenCheck()" class="bg-blue-600 px-5 rounded-xl hover:bg-blue-500 transition-colors"><i data-lucide="search"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="hidden fixed inset-0 z-[300] bg-black/95 flex items-center justify-center p-6">
+        <div class="glass p-10 rounded-[3rem] w-full max-w-2xl border-2 border-blue-500/30">
+            <h3 id="editModalTitle" class="text-2xl font-black mb-8 uppercase text-blue-500 italic">Modyfikacja danych</h3>
+            <div id="editFields" class="grid grid-cols-2 gap-4"></div>
+            <div class="flex gap-4 mt-8">
+                <button onclick="closeEdit()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold uppercase">Anuluj</button>
+                <button id="saveEditBtn" class="flex-1 bg-blue-600 py-4 rounded-2xl font-black uppercase">Zapisz</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="citizenModal" class="hidden fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4">
+        <div id="citizenModalContent" class="glass p-8 rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar"></div>
+    </div>
+
+    <div id="main-interface" class="hidden">
+        <nav class="glass mx-4 my-4 rounded-2xl p-4 px-10 flex justify-between items-center sticky top-4 z-50">
+            <h1 class="font-black text-white italic text-xl tracking-tighter">POL-DRIVE <span class="text-blue-500 text-sm">22.12</span></h1>
+            <div class="flex gap-8 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                <button onclick="switchTab('p-search')" id="btn-search" class="tab-active">Kartoteka</button>
+                <button onclick="switchTab('p-records')" id="btn-records">Wystaw Wpis</button>
+                <button onclick="switchTab('p-reg')" id="btn-reg">Rejestracja</button>
+            </div>
+            <div class="flex items-center gap-6">
+                <span id="off-display" class="text-[9px] font-black text-blue-400 uppercase tracking-widest border border-blue-500/30 px-4 py-1.5 rounded-full bg-blue-500/5"></span>
+                <button onclick="location.reload()" class="text-red-500 hover:scale-110 transition-transform"><i data-lucide="power"></i></button>
+            </div>
+        </nav>
+
+        <main class="p-6 max-w-7xl mx-auto w-full">
+            
+            <div id="p-search" class="tab-content space-y-8">
+                <div class="glass p-8 rounded-[2.5rem] flex gap-4 shadow-2xl">
+                    <input type="text" id="mainSearch" class="flex-1 p-6 rounded-2xl text-2xl uppercase font-black tracking-tighter" placeholder="PESEL OBYWATELA LUB TABLICE POJAZDU">
+                    <button onclick="fullOmniSearch()" class="bg-blue-600 px-14 rounded-2xl hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition-all"><i data-lucide="search" class="w-8 h-8"></i></button>
+                </div>
+                <div id="searchRes" class="hidden glass p-12 rounded-[4rem]"></div>
+            </div>
+
+            <div id="p-reg" class="tab-content hidden grid md:grid-cols-2 gap-8">
+                <div class="glass p-10 rounded-[3rem] space-y-4">
+                    <h3 class="text-2xl font-black uppercase text-emerald-500 italic">Rejestracja Obywatela</h3>
+                    <div class="grid grid-cols-2 gap-4"><input type="text" id="rc_name" placeholder="IMIĘ"><input type="text" id="rc_surname" placeholder="NAZWISKO"></div>
+                    <div class="grid grid-cols-2 gap-4"><input type="text" id="rc_pesel" placeholder="PESEL"><input type="date" id="rc_dob"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <select id="rc_sex"><option value="Mężczyzna">Mężczyzna</option><option value="Kobieta">Kobieta</option></select>
+                        <select id="rc_weapon"><option value="Brak">Brak Broni</option><option value="Posiada">Posiada Broń</option></select>
+                    </div>
+                    <input type="text" id="rc_address" placeholder="ADRES ZAMELDOWANIA">
+                    <button onclick="saveCitizen()" class="w-full bg-emerald-600 py-5 rounded-2xl font-black uppercase mt-4">Dodaj Osobę</button>
+                </div>
+                <div class="glass p-10 rounded-[3rem] space-y-4">
+                    <h3 class="text-2xl font-black uppercase text-blue-500 italic">Rejestracja Pojazdu</h3>
+                    <div class="grid grid-cols-2 gap-4"><input type="text" id="rv_plate" placeholder="TABLICE"><input type="text" id="rv_owner" placeholder="PESEL WŁAŚCICIELA"></div>
+                    <div class="grid grid-cols-2 gap-4"><input type="text" id="rv_brand" placeholder="MARKA"><input type="text" id="rv_color" placeholder="KOLOR"></div>
+                    <textarea id="rv_desc" placeholder="DODATKOWE INFORMACJE O POJEŹDZIE" class="h-24"></textarea>
+                    <button onclick="saveVehicle()" class="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase mt-4">Zarejestruj</button>
+                </div>
+            </div>
+
+            <div id="p-records" class="tab-content hidden grid md:grid-cols-2 gap-8">
+                <div class="glass p-10 rounded-[3rem] border-t-8 border-red-600 shadow-xl">
+                    <h3 class="text-xl font-black mb-6 uppercase tracking-widest text-red-500">Mandat Karny (Wykroczenie)</h3>
+                    <input type="text" id="f_p" placeholder="PESEL ODBIORCY" class="mb-4">
+                    <select id="f_type" class="mb-4">
+                        <option value="">Wybierz wykroczenie z taryfikatora...</option>
+                        <optgroup label="Prędkość (Art. 92a KW)">
+                            <option value="Prędkość: do 10 km/h">Prędkość: do 10 km/h (50 PLN)</option>
+                            <option value="Prędkość: 11–15 km/h">Prędkość: 11–15 km/h (100 PLN)</option>
+                            <option value="Prędkość: 16–20 km/h">Prędkość: 16–20 km/h (200 PLN)</option>
+                            <option value="Prędkość: 21–25 km/h">Prędkość: 21–25 km/h (300 PLN)</option>
+                            <option value="Prędkość: 26–30 km/h">Prędkość: 26–30 km/h (400 PLN)</option>
+                            <option value="Prędkość: 31–40 km/h">Prędkość: 31–40 km/h (800 PLN / Recydywa 1600)</option>
+                            <option value="Prędkość: 41–50 km/h">Prędkość: 41–50 km/h (1000 PLN / Recydywa 2000)</option>
+                            <option value="Prędkość: 51–60 km/h">Prędkość: 51–60 km/h (1500 PLN / Recydywa 3000)</option>
+                            <option value="Prędkość: 61–70 km/h">Prędkość: 61–70 km/h (2000 PLN / Recydywa 4000)</option>
+                            <option value="Prędkość: ponad 70 km/h">Prędkość: ponad 70 km/h (2500 PLN / Recydywa 5000)</option>
+                        </optgroup>
+                        <optgroup label="Piesi i Skrzyżowania">
+                            <option value="Nieustąpienie pierwszeństwa pieszemu">Nieustąpienie pierwszeństwa pieszemu (1500 PLN)</option>
+                            <option value="Wyprzedzanie na przejściu dla pieszych">Wyprzedzanie na przejściu dla pieszych (1500 PLN)</option>
+                            <option value="Jazda wzdłuż po chodniku/przejściu">Jazda wzdłuż po chodniku/przejściu (1500 PLN)</option>
+                            <option value="Niezastosowanie się do sygnalizacji">Niezastosowanie się do sygnalizacji - Czerwone (500 PLN)</option>
+                        </optgroup>
+                        <optgroup label="Bezpieczeństwo i Dokumenty">
+                            <option value="Korzystanie z telefonu (trzymanie)">Korzystanie z telefonu (trzymanie) (500 PLN)</option>
+                            <option value="Brak zapiętych pasów bezpieczeństwa">Brak zapiętych pasów bezpieczeństwa (100 PLN)</option>
+                            <option value="Przewożenie dziecka bez fotelika">Przewożenie dziecka bez fotelika (300 PLN)</option>
+                            <option value="Kierowanie bez uprawnień">Kierowanie bez uprawnień (Min. 1500 PLN + Sąd)</option>
+                        </optgroup>
+                        <optgroup label="Inne Wykroczenia">
+                            <option value="Spożywanie alkoholu w miejscu publicznym">Spożywanie alkoholu w miejscu publicznym (100 PLN)</option>
+                            <option value="Zakłócanie porządku publicznego">Zakłócanie porządku publicznego (Wywiad)</option>
+                            <option value="Używanie słów wulgarnych">Używanie słów wulgarnych (do 100 PLN)</option>
+                            <option value="Zaśmiecanie miejsca publicznego">Zaśmiecanie miejsca publicznego (Min. 500 PLN)</option>
+                        </optgroup>
+                    </select>
+                    <textarea id="f_r" placeholder="NOTATKA SŁUŻBOWA / SZCZEGÓŁY (Widoczne dla obu stron)" class="mb-4 h-24"></textarea>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <input type="number" id="f_pk" value="0" placeholder="PUNKTY">
+                        <input type="number" id="f_pln" value="0" placeholder="KWOTA PLN">
+                    </div>
+                    <button onclick="saveFine()" class="w-full bg-red-600 py-4 rounded-xl font-black uppercase shadow-lg shadow-red-600/20">Zatwierdź Mandat</button>
+                </div>
+
+                <div class="glass p-10 rounded-[3rem] border-t-8 border-orange-600 shadow-xl">
+                    <h3 class="text-xl font-black mb-6 uppercase tracking-widest text-orange-500">Zarzuty Karne (Kodeks Karny)</h3>
+                    <input type="text" id="z_p" placeholder="PESEL OSKARŻONEGO" class="mb-4">
+                    <select id="z_type" class="mb-4">
+                        <option value="">Wybierz artykuł Kodeksu Karnego...</option>
+                        <optgroup label="Przeciwko Życiu i Zdrowiu">
+                            <option value="Art. 148: Zabójstwo">Art. 148: Zabójstwo</option>
+                            <option value="Art. 156: Ciężki uszczerbek na zdrowiu">Art. 156: Ciężki uszczerbek na zdrowiu</option>
+                            <option value="Art. 158: Udział w bójce lub pobiciu">Art. 158: Udział w bójce lub pobiciu</option>
+                            <option value="Art. 190: Groźby karalne">Art. 190: Groźby karalne</option>
+                        </optgroup>
+                        <optgroup label="Przeciwko Mieniu">
+                            <option value="Art. 278: Kradzież mienia">Art. 278: Kradzież mienia</option>
+                            <option value="Art. 279: Kradzież z włamaniem">Art. 279: Kradzież z włamaniem</option>
+                            <option value="Art. 280: Rozbój (Napad)">Art. 280: Rozbój (Napad)</option>
+                            <option value="Art. 282: Wymuszenie rozbójnicze">Art. 282: Wymuszenie rozbójnicze</option>
+                            <option value="Art. 286: Oszustwo">Art. 286: Oszustwo</option>
+                            <option value="Art. 288: Zniszczenie mienia">Art. 288: Zniszczenie mienia</option>
+                        </optgroup>
+                        <optgroup label="Przeciwko Władzy / Funkcjonariuszom">
+                            <option value="Art. 222: Naruszenie nietykalności funkcjonariusza">Art. 222: Naruszenie nietykalności funkcjonariusza</option>
+                            <option value="Art. 223: Czynna napaść na funkcjonariusza">Art. 223: Czynna napaść na funkcjonariusza</option>
+                            <option value="Art. 224: Wywieranie wpływu na czynności urzędowe">Art. 224: Wywieranie wpływu na czynności urzędowe</option>
+                            <option value="Art. 226: Znieważenie funkcjonariusza">Art. 226: Znieważenie funkcjonariusza</option>
+                            <option value="Art. 229: Przekupstwo (Łapownictwo)">Art. 229: Przekupstwo (Łapownictwo)</option>
+                        </optgroup>
+                        <optgroup label="Narkotyki i Bezpieczeństwo">
+                            <option value="Ustawowe: Posiadanie środków odurzających">Posiadanie środków odurzających</option>
+                            <option value="Ustawowe: Handel / udzielanie narkotyków">Handel / udzielanie narkotyków</option>
+                            <option value="Art. 178a: Prowadzenie pod wpływem alkoholu/środków">Art. 178a: Prowadzenie pod wpływem (Przestępstwo)</option>
+                            <option value="Art. 263: Nielegalne posiadanie broni palnej">Art. 263: Nielegalne posiadanie broni palnej</option>
+                        </optgroup>
+                        <optgroup label="Inne Przestępstwa">
+                            <option value="Art. 242: Ucieczka osoby pozbawionej wolności">Art. 242: Ucieczka (Prison break)</option>
+                            <option value="Art. 207: Znęcanie się">Art. 207: Znęcanie się</option>
+                        </optgroup>
+                    </select>
+                    <textarea id="z_d" placeholder="SZCZEGÓŁOWY OPIS CZYNU ZABRONIONEGO" class="mb-4 h-28"></textarea>
+                    <button onclick="saveCharge()" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase shadow-lg shadow-orange-600/20">Wnieś Oskarżenie</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const UNIT_SECRET_CODE = "LSPD2024";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBMptS-QWhs66yFbn8I-Ho5wIe9hP5Zk08",
+            authDomain: "baza-pol-drive.firebaseapp.com",
+            projectId: "baza-pol-drive",
+            storageBucket: "baza-pol-drive.firebasestorage.app",
+            messagingSenderId: "626063864361",
+            appId: "1:626063864361:web:a10f17111f1ffdfd542238"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // System Czasu
+        function getNow() {
+            const n = new Date();
+            return n.toLocaleDateString('pl-PL') + " | " + n.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // Pomocnicze UI
+        function clearForms(ids) { ids.forEach(id => { const el = document.getElementById(id); if(el) { if(el.type === 'number') el.value = "0"; else if(el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ""; } }); }
+        function toggleAuth(reg) { document.getElementById('login-form').classList.toggle('hidden', reg); document.getElementById('register-form').classList.toggle('hidden', !reg); }
+        function switchTab(t) { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active')); document.getElementById(t).classList.remove('hidden'); document.getElementById('btn-'+t.split('-')[1]).classList.add('tab-active'); }
+        function closeEdit() { document.getElementById('editModal').classList.add('hidden'); }
+
+        // Auth
+        async function loginOfficer() {
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value;
+            const doc = await db.collection('police_accounts').doc(u).get();
+            if(doc.exists && doc.data().password === p) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-interface').classList.remove('hidden');
+                document.getElementById('off-display').innerText = "ZALOGOWANO: " + u.toUpperCase();
+            } else alert("BŁĄD AUTORYZACJI!");
+        }
+
+        async function registerOfficer() {
+            const u = document.getElementById('reg-user').value.trim();
+            const p = document.getElementById('reg-pass').value;
+            if(document.getElementById('reg-unit-code').value !== UNIT_SECRET_CODE) return alert("BŁĘDNY KOD JEDNOSTKI!");
+            await db.collection('police_accounts').doc(u).set({ password: p });
+            alert("Konto utworzone."); toggleAuth(false);
+        }
+
+        // Search
+        async function citizenCheck() {
+            const p = document.getElementById('citizen-pesel-check').value.trim();
+            const s = await db.collection('citizens').where('pesel', '==', p).get();
+            if(s.empty) return alert("Obywatel nie figuruje w bazie.");
+            renderResult(s.docs[0], true);
+        }
+
+        async function fullOmniSearch() {
+            const q = document.getElementById('mainSearch').value.toUpperCase().trim();
+            if(!q) return;
+            let s = await db.collection('citizens').where('pesel', '==', q).get();
+            if(s.empty) {
+                const vs = await db.collection('vehicles').where('plate', '==', q).get();
+                if(!vs.empty) s = await db.collection('citizens').where('pesel', '==', vs.docs[0].data().owner).get();
+            }
+            if(s.empty) return alert("BRAK WYNIKÓW W CENTRALNEJ BAZIE.");
+            renderResult(s.docs[0], false);
+        }
+
+        // Renderowanie Kartoteki
+        async function renderResult(doc, isCitizen) {
+            const d = doc.data(); const id = doc.id;
+            const [vehs, fines, charges] = await Promise.all([
+                db.collection('vehicles').where('owner', '==', d.pesel).get(),
+                db.collection('fines').where('target', '==', d.pesel).get(),
+                db.collection('charges').where('target', '==', d.pesel).get()
+            ]);
+            let pts = 0; fines.forEach(f => pts += (f.data().pts || 0));
+
+            const html = `
+                <div class="flex justify-between items-start mb-10">
+                    <div>
+                        <h2 class="text-4xl font-black uppercase italic tracking-tighter">${d.fullName}</h2>
+                        <p class="text-blue-500 font-mono text-lg mt-1">${d.pesel}</p>
+                    </div>
+                    ${isCitizen ? `<button onclick="document.getElementById('citizenModal').classList.add('hidden')" class="bg-red-600 px-6 py-2 rounded-xl text-xs font-black uppercase">Zamknij Widok</button>` : ''}
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-10">
+                    <div class="space-y-4">
+                        <div class="bg-black/40 p-6 rounded-[2rem] border border-white/5 space-y-3 text-[11px]">
+                            <p class="flex justify-between border-b border-white/5 pb-2"><b>DATA URODZENIA:</b> <span>${d.dob}</span></p>
+                            <p class="flex justify-between border-b border-white/5 pb-2"><b>STATUS PRAWNY:</b> <span class="font-black ${d.status=='poszukiwany'?'text-red-500':'text-emerald-500'} uppercase">${d.status}</span></p>
+                            <p class="flex justify-between border-b border-white/5 pb-2"><b>UPRAWNIENIA:</b> <span class="${d.license=='Aktywne'?'text-emerald-500':'text-red-400'}">${d.license || 'Aktywne'}</span></p>
+                            <p class="flex justify-between border-b border-white/5 pb-2"><b>BROŃ:</b> <span class="${d.weaponStatus=='Posiada'?'text-emerald-500':'text-red-500'}">${d.weaponStatus || 'Brak'}</span></p>
+                            <p class="flex justify-between text-lg pt-2"><b>PUNKTY:</b> <span class="text-red-500 font-black">${pts}/24</span></p>
+                            <div class="mt-4">
+                                <span class="opacity-30 uppercase text-[9px] block mb-1">Miejsce zamieszkania:</span>
+                                <p class="text-slate-400 italic">${d.address}</p>
+                            </div>
+                        </div>
+                        ${!isCitizen ? `<button onclick='openEditCitizen("${id}", ${JSON.stringify(d)})' class="w-full bg-blue-600/10 py-4 rounded-2xl border border-blue-500/30 text-[10px] font-black uppercase tracking-widest text-blue-400 hover:bg-blue-600 hover:text-white transition-all">Edytuj Profil</button>` : ''}
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-[10px] opacity-40 uppercase font-black tracking-widest pl-2">Garaż / Pojazdy</h3>
+                        ${vehs.docs.map(v => {
+                            const vd = v.data();
+                            return `<div class="bg-white/5 p-5 rounded-3xl border border-white/5 group relative overflow-hidden">
+                                <div class="flex justify-between items-center relative z-10">
+                                    <b class="text-blue-400 font-mono text-xl">${vd.plate}</b>
+                                    ${!isCitizen ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button onclick='openEditVehicle("${v.id}", ${JSON.stringify(vd)})' class="bg-blue-500/20 p-2 rounded-lg text-blue-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                        <button onclick='delRec("vehicles", "${v.id}")' class="bg-red-500/20 p-2 rounded-lg text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </div>` : ''}
+                                </div>
+                                <p class="text-[11px] font-bold mt-2 uppercase text-slate-300">${vd.brand} • ${vd.color}</p>
+                                <p class="text-[9px] opacity-40 mt-1 italic">${vd.desc || ''}</p>
+                            </div>`;
+                        }).join('') || '<p class="opacity-20 italic text-sm pl-2">Brak zarejestrowanych pojazdów</p>'}
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-[10px] opacity-40 uppercase font-black tracking-widest pl-2">Historia Karno-Sądowa</h3>
+                        <div class="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                            ${charges.docs.map(z => `<div class="bg-orange-500/5 p-4 rounded-2xl border border-orange-500/20 text-[11px] group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="bg-orange-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Zarzut</span>
+                                    ${!isCitizen ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onclick='openEditCharge("${z.id}", ${JSON.stringify(z.data())})' class="text-blue-400"><i data-lucide="edit-2" class="w-3"></i></button>
+                                        <button onclick='delRec("charges", "${z.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button>
+                                    </div>` : ''}
+                                </div>
+                                <b class="text-orange-400 block text-sm mb-1">${z.data().title}</b>
+                                <p class="text-slate-400 p-3 bg-black/30 rounded-xl border border-white/5 leading-relaxed">${z.data().desc || 'Brak opisu czynu.'}</p>
+                                <div class="mt-3 text-[9px] opacity-30 font-mono flex items-center gap-2">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i> ${z.data().timestamp || 'Historyczne'}
+                                </div>
+                            </div>`).join('')}
+
+                            ${fines.docs.map(f => `<div class="bg-red-500/5 p-4 rounded-2xl border border-red-500/20 text-[11px] group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="bg-red-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Mandat</span>
+                                    ${!isCitizen ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onclick='openEditFine("${f.id}", ${JSON.stringify(f.data())})' class="text-blue-400"><i data-lucide="edit-2" class="w-3"></i></button>
+                                        <button onclick='delRec("fines", "${f.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button>
+                                    </div>` : ''}
+                                </div>
+                                <b class="text-red-400 block text-sm mb-1">${f.data().reason}</b>
+                                <p class="text-slate-400 p-3 bg-black/30 rounded-xl border border-white/5 italic">${f.data().note || 'Brak notatki.'}</p>
+                                <div class="flex justify-between items-center mt-3">
+                                    <span class="text-white font-black">${f.data().cash} PLN / ${f.data().pts} PKT</span>
+                                    <span class="text-[8px] opacity-20 font-mono">${f.data().timestamp || 'N/A'}</span>
+                                </div>
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+
+            if(isCitizen) {
+                document.getElementById('citizenModalContent').innerHTML = html;
+                document.getElementById('citizenModal').classList.remove('hidden');
+            } else {
+                const res = document.getElementById('searchRes');
+                res.innerHTML = html; res.classList.remove('hidden');
+                res.className = `glass p-12 rounded-[4rem] border-l-[16px] transition-all duration-700 ${d.status=='poszukiwany'?'wanted-alert border-red-600':'border-blue-600'}`;
+            }
+            lucide.createIcons();
+        }
+
+        // --- FUNKCJE LOGIKI DANYCH ---
+
+        async function saveCitizen() {
+            const p = document.getElementById('rc_pesel').value.trim();
+            if(!p) return alert("BŁĄD: PESEL JEST WYMAGANY.");
+            await db.collection('citizens').add({ 
+                fullName: (document.getElementById('rc_name').value + " " + document.getElementById('rc_surname').value).toUpperCase(), 
+                pesel: p, dob: document.getElementById('rc_dob').value, 
+                address: document.getElementById('rc_address').value.toUpperCase(), 
+                status: 'czysty', license: 'Aktywne', 
+                weaponStatus: document.getElementById('rc_weapon').value 
+            });
+            alert("Obywatel dodany do bazy."); clearForms(['rc_name', 'rc_surname', 'rc_pesel', 'rc_dob', 'rc_address']);
+        }
+
+        async function saveVehicle() {
+            const p = document.getElementById('rv_plate').value.toUpperCase().trim();
+            const o = document.getElementById('rv_owner').value.trim();
+            if(!p || !o) return alert("BŁĄD: TABLICE I WŁAŚCICIEL WYMAGANI.");
+            await db.collection('vehicles').add({ plate: p, owner: o, brand: document.getElementById('rv_brand').value.toUpperCase(), color: document.getElementById('rv_color').value.toUpperCase(), desc: document.getElementById('rv_desc').value.toUpperCase() });
+            alert("Pojazd zarejestrowany."); clearForms(['rv_plate', 'rv_owner', 'rv_brand', 'rv_color', 'rv_desc']);
+        }
+
+        async function saveFine() {
+            const target = document.getElementById('f_p').value.trim();
+            const r = document.getElementById('f_type').value;
+            if(!target || !r) return alert("BŁĄD: PESEL I TYP WYKROCZENIA!");
+            await db.collection('fines').add({ target: target, reason: r, note: document.getElementById('f_r').value.toUpperCase(), pts: parseInt(document.getElementById('f_pk').value) || 0, cash: parseInt(document.getElementById('f_pln').value) || 0, timestamp: getNow() });
+            alert("Mandat wystawiony pomyślnie."); clearForms(['f_p', 'f_pk', 'f_pln', 'f_r', 'f_type']);
+        }
+
+        async function saveCharge() {
+            const target = document.getElementById('z_p').value.trim();
+            const t = document.getElementById('z_type').value;
+            if(!target || !t) return alert("BŁĄD: PESEL I TYP ZARZUTU!");
+            await db.collection('charges').add({ target: target, title: t, desc: document.getElementById('z_d').value.toUpperCase(), timestamp: getNow() });
+            alert("Zarzut naniesiony na kartotekę."); clearForms(['z_p', 'z_d', 'z_type']);
+        }
+
+        // --- EDYCJA ---
+
+        function openEditCitizen(id, data) {
+            document.getElementById('editModalTitle').innerText = "Karta Osobowa: " + data.pesel;
+            document.getElementById('editFields').innerHTML = `
+                <div class="col-span-2"><label class="text-[9px] opacity-30 px-2 uppercase">Imię i Nazwisko</label><input type="text" id="e_fullName" value="${data.fullName}"></div>
+                <div><label class="text-[9px] opacity-30 px-2 uppercase">PESEL</label><input type="text" id="e_pesel" value="${data.pesel}"></div>
+                <div><label class="text-[9px] opacity-30 px-2 uppercase">Status Prawny</label><select id="e_status"><option value="czysty" ${data.status=='czysty'?'selected':''}>Czysty</option><option value="poszukiwany" ${data.status=='poszukiwany'?'selected':''}>Poszukiwany</option></select></div>
+                <div><label class="text-[9px] opacity-30 px-2 uppercase">Uprawnienia PJ</label><select id="e_license"><option value="Aktywne" ${data.license=='Aktywne'?'selected':''}>Aktywne</option><option value="Zatrzymane" ${data.license=='Zatrzymane'?'selected':''}>Zatrzymane</option></select></div>
+                <div><label class="text-[9px] opacity-30 px-2 uppercase">Pozwolenie Broń</label><select id="e_weapon"><option value="Brak" ${data.weaponStatus=='Brak'?'selected':''}>Brak</option><option value="Posiada" ${data.weaponStatus=='Posiada'?'selected':''}>Posiada</option></select></div>
+                <div class="col-span-2"><label class="text-[9px] opacity-30 px-2 uppercase">Adres</label><input type="text" id="e_address" value="${data.address}"></div>`;
+            
+            document.getElementById('saveEditBtn').onclick = async () => {
+                const oldP = data.pesel; const newP = document.getElementById('e_pesel').value.trim();
+                await db.collection('citizens').doc(id).update({ fullName: document.getElementById('e_fullName').value.toUpperCase(), pesel: newP, status: document.getElementById('e_status').value, license: document.getElementById('e_license').value, weaponStatus: document.getElementById('e_weapon').value, address: document.getElementById('e_address').value.toUpperCase() });
+                if(oldP !== newP) {
+                    const jobs = [['vehicles','owner'],['fines','target'],['charges','target']];
+                    for(let [c, k] of jobs) {
+                        const s = await db.collection(c).where(k,'==',oldP).get();
+                        const b = db.batch(); s.forEach(doc => b.update(doc.ref, {[k]: newP})); await b.commit();
+                    }
+                }
+                closeEdit(); fullOmniSearch();
+            };
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function openEditVehicle(id, data) {
+            document.getElementById('editModalTitle').innerText = "Edycja Pojazdu: " + data.plate;
+            document.getElementById('editFields').innerHTML = `<div class="col-span-2"><input type="text" id="ev_plate" value="${data.plate}"></div><input type="text" id="ev_brand" value="${data.brand}"><input type="text" id="ev_color" value="${data.color}"><div class="col-span-2"><textarea id="ev_desc">${data.desc}</textarea></div>`;
+            document.getElementById('saveEditBtn').onclick = async () => {
+                await db.collection('vehicles').doc(id).update({ plate: document.getElementById('ev_plate').value.toUpperCase(), brand: document.getElementById('ev_brand').value.toUpperCase(), color: document.getElementById('ev_color').value.toUpperCase(), desc: document.getElementById('ev_desc').value.toUpperCase() });
+                closeEdit(); fullOmniSearch();
+            };
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function openEditFine(id, data) {
+            document.getElementById('editModalTitle').innerText = "Korekta Mandatu";
+            document.getElementById('editFields').innerHTML = `<div class="col-span-2"><input type="text" id="ef_r" value="${data.reason}"></div><div class="col-span-2"><textarea id="ef_n">${data.note || ''}</textarea></div><input type="number" id="ef_pln" value="${data.cash}"><input type="number" id="ef_pk" value="${data.pts}">`;
+            document.getElementById('saveEditBtn').onclick = async () => {
+                await db.collection('fines').doc(id).update({ reason: document.getElementById('ef_r').value, note: document.getElementById('ef_n').value.toUpperCase(), cash: parseInt(document.getElementById('ef_pln').value), pts: parseInt(document.getElementById('ef_pk').value) });
+                closeEdit(); fullOmniSearch();
+            };
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function openEditCharge(id, data) {
+            document.getElementById('editModalTitle').innerText = "Korekta Zarzutu";
+            document.getElementById('editFields').innerHTML = `<div class="col-span-2"><input type="text" id="ez_t" value="${data.title}"></div><div class="col-span-2"><textarea id="ez_d">${data.desc}</textarea></div>`;
+            document.getElementById('saveEditBtn').onclick = async () => {
+                await db.collection('charges').doc(id).update({ title: document.getElementById('ez_t').value, desc: document.getElementById('ez_d').value.toUpperCase() });
+                closeEdit(); fullOmniSearch();
+            };
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function delRec(c, id) { if(confirm("CZY NA PEWNO CHCESZ TRWALE USUNĄĆ TEN WPIS Z BAZY DANYCH?")) { db.collection(c).doc(id).delete(); fullOmniSearch(); } }
+        
+        lucide.createIcons();
+    </script>
+</body>
+</html>
