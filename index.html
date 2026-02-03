@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8K2K9PDZ99"></script>
 <script>
@@ -15,7 +15,7 @@
     <title>POL-DRIVE | TERMINAL</title>
     <meta name="description" content="POL-DRIVE - Zintegrowany system operacyjny do zarządzania kartoteką obywateli, pojazdów i dynamicznym taryfikatorem mandatów.">
     <meta property="og:type" content="website">
-<meta property="og:title" content="POL-DRIVE 22.12 | SYSTEM OPERACYJNY">
+<meta property="og:title" content="POL-DRIVE | TERMINAL">
 <meta property="og:description" content="Centralna baza danych obywateli i pojazdów z systemem dynamicznych mandatów i zarzutów.">
 <meta property="og:image" content="ikona.png">
 <link rel="icon" type="image/png" href="ikona.png">    
@@ -41,13 +41,15 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
         option { background: #0f172a; color: white; padding: 10px; }
         optgroup { background: #1e293b; color: #3b82f6; font-weight: bold; }
+#cookie-banner { transform: translateY(0); transition: all 0.5s ease; visibility: visible; opacity: 1; }
+#cookie-banner.hide { transform: translateY(150%); opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body class="pb-20">
 
     <div id="auth-screen" class="min-h-screen flex flex-col items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900 to-black">
         <div class="glass p-10 rounded-[3rem] w-full max-w-md shadow-2xl mb-6 text-center">
-            <h1 class="text-4xl font-black italic text-white tracking-tighter mb-10">POL-DRIVE<span class="text-blue-500"> TERMINAL</span></h1>
+            <h1 class="text-4xl font-black italic text-white tracking-tighter mb-10">POL-DRIVE<span class="text-blue-500">22.12</span></h1>
             <div id="login-form" class="space-y-4">
                 <input type="text" id="login-user" placeholder="ID Funkcjonariusza">
                 <input type="password" id="login-pass" placeholder="Klucz dostępu">
@@ -89,7 +91,7 @@
 
     <div id="main-interface" class="hidden">
         <nav class="glass mx-4 my-4 rounded-2xl p-4 px-10 flex justify-between items-center sticky top-4 z-50">
-            <h1 class="font-black text-white italic text-xl tracking-tighter">POL-DRIVE <span class="text-blue-500 text-sm"> TERMINAL</span></h1>
+            <h1 class="font-black text-white italic text-xl tracking-tighter">POL-DRIVE <span class="text-blue-500 text-sm">22.12</span></h1>
             <div class="flex gap-8 text-[11px] font-bold uppercase tracking-widest text-slate-400">
                 <button onclick="switchTab('p-search')" id="btn-search" class="tab-active">Kartoteka</button>
                 <button onclick="switchTab('p-records')" id="btn-records">Wystaw Wpis</button>
@@ -219,6 +221,35 @@
                 </div>
             </div>
         </main>
+</div> <footer class="mt-auto w-full glass border-t border-white/5 py-6 px-10">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            <div class="flex gap-8">
+                <a href="polityka-prywatnosci.html" target="_blank" class="hover:text-blue-500 transition-colors">Polityka Prywatności</a>
+                <a href="regulamin.html" target="_blank" class="hover:text-blue-500 transition-colors">Regulamin</a>
+                <a href="rod.html" target="_blank" class="hover:text-blue-500 transition-colors">RODO</a>
+            </div>
+            <div class="opacity-30">
+                &copy; 2026 POL-DRIVE Wszystkie prawa zastrzeżone.
+            </div>
+        </div>
+    </footer>
+<div id="cookie-banner" class="fixed bottom-6 left-6 right-6 md:left-auto md:right-10 md:w-[400px] glass p-6 rounded-[2rem] shadow-2xl z-[1000] border border-blue-500/30">
+        <div class="flex items-start gap-4">
+            <div class="bg-blue-500/20 p-3 rounded-xl text-blue-500">
+                <i data-lucide="cookie"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-black uppercase text-sm mb-1 tracking-wider text-white">Pliki Cookies</h4>
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                    System POL-DRIVE wykorzystuje ciasteczka do zapewnienia bezpiecznego logowania i poprawnego działania bazy danych.
+                </p>
+                <div class="flex gap-3 mt-4">
+                    <button onclick="acceptCookies()" class="flex-1 bg-blue-600 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-blue-500 transition-all text-white">Akceptuję</button>
+                    <a href="polityka-prywatnosci.html" class="flex-1 border border-white/10 py-2 rounded-lg text-[10px] font-black uppercase text-center hover:bg-white/5 transition-all text-slate-300">Szczegóły</a>
+                </div>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -239,6 +270,27 @@
             const n = new Date();
             return n.toLocaleDateString('pl-PL') + " | " + n.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
         }
+// FUNKCJA AKCEPTACJI COOKIES
+function acceptCookies() {
+    localStorage.setItem('cookiesAccepted', 'true');
+    const banner = document.getElementById('cookie-banner');
+    if (banner) {
+        banner.classList.add('hide-banner');
+        setTimeout(() => {
+            banner.style.display = 'none';
+        }, 500);
+    }
+}
+
+// SPRAWDZENIE STATUSU PRZY STARTOWANIU STRONY
+window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('cookiesAccepted') === 'true') {
+        const banner = document.getElementById('cookie-banner');
+        if (banner) banner.style.display = 'none';
+    }
+    // Inicjalizacja ikonek
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+});
 
         // Pomocnicze UI
         function clearForms(ids) { ids.forEach(id => { const el = document.getElementById(id); if(el) { if(el.type === 'number') el.value = "0"; else if(el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ""; } }); }
@@ -488,7 +540,4 @@
         lucide.createIcons();
     </script>
 </body>
-
 </html>
-
-
