@@ -323,7 +323,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if(doc.exists && doc.data().password === p) {
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('main-interface').classList.remove('hidden');
-                document.getElementById('off-display').innerText = "ZALOGOWANO: " + u.toUpperCase();
+                document.getElementById('off-display').innerText = "ID: " + u.toUpperCase();
             } else alert("BŁĄD AUTORYZACJI!");
         }
 
@@ -356,8 +356,12 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         // Renderowanie Kartoteki
-        async function renderResult(doc, isCitizen) {
+async function renderResult(doc, isCitizen) {
             const d = doc.data(); const id = doc.id;
+            const offElement = document.getElementById('off-display');
+            const isOfficer = offElement && offElement.innerText.includes("ID:");
+            const canEdit = !isCitizen && isOfficer;
+
             const [vehs, fines, charges] = await Promise.all([
                 db.collection('vehicles').where('owner', '==', d.pesel).get(),
                 db.collection('fines').where('target', '==', d.pesel).get(),
@@ -376,7 +380,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 
                 <div class="grid md:grid-cols-3 gap-10">
                     <div class="space-y-4">
-                        <div class="bg-black/40 p-6 rounded-[2rem] border border-white/5 space-y-3 text-[11px]">
+                        <div class="bg-black/40 p-6 rounded-[2rem] border border-white/5 space-y-3 text-[11px] relative group">
                             <p class="flex justify-between border-b border-white/5 pb-2"><b>DATA URODZENIA:</b> <span>${d.dob}</span></p>
                             <p class="flex justify-between border-b border-white/5 pb-2"><b>STATUS PRAWNY:</b> <span class="font-black ${d.status=='poszukiwany'?'text-red-500':'text-emerald-500'} uppercase">${d.status}</span></p>
                             <p class="flex justify-between border-b border-white/5 pb-2"><b>UPRAWNIENIA:</b> <span class="${d.license=='Aktywne'?'text-emerald-500':'text-red-400'}">${d.license || 'Aktywne'}</span></p>
@@ -386,72 +390,66 @@ window.addEventListener('DOMContentLoaded', () => {
                                 <span class="opacity-30 uppercase text-[9px] block mb-1">Miejsce zamieszkania:</span>
                                 <p class="text-slate-400 italic">${d.address}</p>
                             </div>
+                            ${canEdit ? `<button onclick='openEditCitizen("${id}", ${JSON.stringify(d)})' class="absolute top-4 right-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="edit-3" class="w-4"></i></button>` : ''}
                         </div>
-                        ${!isCitizen ? `<button onclick='openEditCitizen("${id}", ${JSON.stringify(d)})' class="w-full bg-blue-600/10 py-4 rounded-2xl border border-blue-500/30 text-[10px] font-black uppercase tracking-widest text-blue-400 hover:bg-blue-600 hover:text-white transition-all">Edytuj Profil</button>` : ''}
                     </div>
 
                     <div class="space-y-4">
                         <h3 class="text-[10px] opacity-40 uppercase font-black tracking-widest pl-2">Garaż / Pojazdy</h3>
-${vehs.docs.map(v => {
+                        ${vehs.docs.map(v => {
                             const vd = v.data();
-                            const isSeized = vd.documentStatus === 'Zatrzymany';
                             return `
-                                <div class="bg-white/5 p-4 rounded-2xl border ${isSeized ? 'border-red-500/50' : 'border-white/5'} mb-2 group relative">
+                                <div class="bg-white/5 p-4 rounded-2xl border ${vd.documentStatus === 'Zatrzymany' ? 'border-red-500/50' : 'border-white/5'} mb-2 group relative">
                                     <div class="flex justify-between items-start">
                                         <b class="text-blue-400 text-lg">${vd.plate}</b>
-                                        <span class="text-[9px] font-bold px-2 py-1 rounded ${isSeized ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}">
+                                        <span class="text-[9px] font-bold px-2 py-1 rounded ${vd.documentStatus === 'Zatrzymany' ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}">
                                             ${vd.documentStatus || 'Posiadany'}
                                         </span>
                                     </div>
-                                    <p class="text-[10px] opacity-60">${vd.brand || 'Nieznany'} (${vd.color || 'Brak'})</p>
+                                    <p class="text-[10px] opacity-60">${vd.brand} (${vd.color})</p>
+                                    ${canEdit ? `
                                     <div class="absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                         <button onclick='openEditVehicle("${v.id}", ${JSON.stringify(vd)})' class="text-blue-400"><i data-lucide="edit-3" class="w-4"></i></button>
                                         <button onclick='delRec("vehicles", "${v.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-4"></i></button>
-                                    </div>
+                                    </div>` : ''}
                                 </div>
                             `;
-                        }).join('') || '<p class="opacity-20 italic">Brak pojazdów</p>'}
-                    </div><div class="space-y-4">
-                        <h3 class="text-[10px] opacity-40 uppercase font-black">Kartoteka</h3>
-                        ${charges.docs.map(z => `<div class="bg-orange-500/5 p-3 rounded-xl border border-orange-500/20 text-[10px] mb-2 group">
-                            <div class="flex justify-between"><b>${z.data().title}</b><div class="opacity-0 group-hover:opacity-100"><button onclick='openEditCharge("${z.id}", ${JSON.stringify(z.data())})' class="text-blue-400 mr-2"><i data-lucide="edit-3" class="w-3"></i></button><button onclick='delRec("charges", "${z.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button></div></div>
-                            <p class="opacity-60">${z.data().desc}</p>
-                        </div>`).join('')}
+                        }).join('') || '<p class="opacity-20 italic pl-2">Brak pojazdów</p>'}
                     </div>
-                </div>
+
                     <div class="space-y-4">
                         <h3 class="text-[10px] opacity-40 uppercase font-black tracking-widest pl-2">Historia Karno-Sądowa</h3>
                         <div class="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                            ${charges.docs.map(z => `<div class="bg-orange-500/5 p-4 rounded-2xl border border-orange-500/20 text-[11px] group">
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="bg-orange-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Zarzut</span>
-                                    ${!isCitizen ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onclick='openEditCharge("${z.id}", ${JSON.stringify(z.data())})' class="text-blue-400"><i data-lucide="edit-2" class="w-3"></i></button>
-                                        <button onclick='delRec("charges", "${z.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button>
-                                    </div>` : ''}
-                                </div>
-                                <b class="text-orange-400 block text-sm mb-1">${z.data().title}</b>
-                                <p class="text-slate-400 p-3 bg-black/30 rounded-xl border border-white/5 leading-relaxed">${z.data().desc || 'Brak opisu czynu.'}</p>
-                                <div class="mt-3 text-[9px] opacity-30 font-mono flex items-center gap-2">
-                                    <i data-lucide="calendar" class="w-3 h-3"></i> ${z.data().timestamp || 'Historyczne'}
-                                </div>
-                            </div>`).join('')}
+                            ${charges.docs.map(z => {
+                                const zd = z.data();
+                                return `
+                                <div class="bg-orange-500/5 p-4 rounded-2xl border border-orange-500/20 text-[11px] group relative">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="bg-orange-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Zarzut</span>
+                                        ${canEdit ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100"><button onclick='openEditCharge("${z.id}", ${JSON.stringify(zd)})' class="text-blue-400"><i data-lucide="edit-2" class="w-3"></i></button><button onclick='delRec("charges", "${z.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button></div>` : ''}
+                                    </div>
+                                    <b class="text-orange-400 block text-sm mb-1">${zd.title}</b>
+                                    <p class="text-slate-400 p-3 bg-black/30 rounded-xl border border-white/5 mb-2">${zd.desc || ''}</p>
+                                    <div class="text-[9px] opacity-30 font-mono"><i data-lucide="clock" class="w-3 h-3 inline"></i> ${zd.timestamp || 'Brak daty'}</div>
+                                </div>`;
+                            }).join('')}
 
-                            ${fines.docs.map(f => `<div class="bg-red-500/5 p-4 rounded-2xl border border-red-500/20 text-[11px] group">
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="bg-red-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Mandat</span>
-                                    ${!isCitizen ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onclick='openEditFine("${f.id}", ${JSON.stringify(f.data())})' class="text-blue-400"><i data-lucide="edit-2" class="w-3"></i></button>
-                                        <button onclick='delRec("fines", "${f.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button>
-                                    </div>` : ''}
-                                </div>
-                                <b class="text-red-400 block text-sm mb-1">${f.data().reason}</b>
-                                <p class="text-slate-400 p-3 bg-black/30 rounded-xl border border-white/5 italic">${f.data().note || 'Brak notatki.'}</p>
-                                <div class="flex justify-between items-center mt-3">
-                                    <span class="text-white font-black">${f.data().cash} PLN / ${f.data().pts} PKT</span>
-                                    <span class="text-[8px] opacity-20 font-mono">${f.data().timestamp || 'N/A'}</span>
-                                </div>
-                            </div>`).join('')}
+                            ${fines.docs.map(f => {
+                                const fd = f.data();
+                                return `
+                                <div class="bg-red-500/5 p-4 rounded-2xl border border-red-500/20 text-[11px] group relative">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="bg-red-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Mandat</span>
+                                        ${canEdit ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100"><button onclick='openEditFine("${f.id}", ${JSON.stringify(fd)})' class="text-blue-400"><i data-lucide="edit-2" class="w-3"></i></button><button onclick='delRec("fines", "${f.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button></div>` : ''}
+                                    </div>
+                                    <b class="text-red-400 block text-sm mb-1">${fd.reason}</b>
+                                    <p class="text-slate-400 p-3 bg-black/30 rounded-xl border border-white/5 italic mb-3">${fd.note || ''}</p>
+                                    <div class="flex justify-between items-end">
+                                        <div class="font-black text-[10px]"><span class="text-white">${fd.cash} PLN</span> / <span class="text-red-500">${fd.pts} PKT</span></div>
+                                        <div class="text-[8px] opacity-20 font-mono">${fd.timestamp || ''}</div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
                         </div>
                     </div>
                 </div>`;
@@ -466,7 +464,6 @@ ${vehs.docs.map(v => {
             }
             lucide.createIcons();
         }
-
         // --- FUNKCJE LOGIKI DANYCH ---
 
         async function saveCitizen() {
@@ -541,36 +538,34 @@ async function saveVehicle() {
             };
             document.getElementById('editModal').classList.remove('hidden');
         }
-
+// FUNKCJE EDYCJI Z OBSŁUGĄ BEZPIECZNEGO PARSOWANIA
 function openEditVehicle(id, data) {
-    document.getElementById('editModalTitle').innerText = "Modyfikacja Pojazdu";
-    document.getElementById('editFields').innerHTML = `
-        <div class="col-span-2"><input type="text" id="ev_p" value="${data.plate}" placeholder="Tablice"></div>
-        <div class="col-span-2">
-            <select id="ev_doc">
-                <option value="Posiadany" ${data.documentStatus === 'Posiadany' ? 'selected' : ''}>Dowód: POSIADANY</option>
-                <option value="Zatrzymany" ${data.documentStatus === 'Zatrzymany' ? 'selected' : ''}>Dowód: ZATRZYMANY</option>
-            </select>
-        </div>
-        <div class="col-span-2"><textarea id="ev_d" placeholder="Opis">${data.desc || ''}</textarea></div>
-    `;
-    
-    document.getElementById('saveEditBtn').onclick = async () => {
-        await db.collection('vehicles').doc(id).update({ 
-            plate: document.getElementById('ev_p').value.toUpperCase(),
-            documentStatus: document.getElementById('ev_doc').value,
-            desc: document.getElementById('ev_d').value.toUpperCase()
-        });
-        closeEdit(); 
-        fullOmniSearch();
-    };
-    document.getElementById('editModal').classList.remove('hidden');
-}
+            document.getElementById('editModalTitle').innerText = "Korekta Pojazdu";
+            document.getElementById('editFields').innerHTML = `
+                <div class="col-span-2"><input type="text" id="ev_b" value="${data.brand}"></div>
+                <div class="col-span-1"><input type="text" id="ev_c" value="${data.color}"></div>
+                <div class="col-span-1">
+                    <select id="ev_s" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm">
+                        <option value="Posiadany" ${data.documentStatus === 'Posiadany' ? 'selected' : ''}>Posiadany</option>
+                        <option value="Zatrzymany" ${data.documentStatus === 'Zatrzymany' ? 'selected' : ''}>Zatrzymany</option>
+                    </select>
+                </div>`;
+            document.getElementById('saveEditBtn').onclick = async () => {
+                await db.collection('vehicles').doc(id).update({ brand: document.getElementById('ev_b').value.toUpperCase(), color: document.getElementById('ev_c').value.toUpperCase(), documentStatus: document.getElementById('ev_s').value });
+                closeEdit(); fullOmniSearch();
+            };
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
         function openEditFine(id, data) {
             document.getElementById('editModalTitle').innerText = "Korekta Mandatu";
-            document.getElementById('editFields').innerHTML = `<div class="col-span-2"><input type="text" id="ef_r" value="${data.reason}"></div><div class="col-span-2"><textarea id="ef_n">${data.note || ''}</textarea></div><input type="number" id="ef_pln" value="${data.cash}"><input type="number" id="ef_pk" value="${data.pts}">`;
+            document.getElementById('editFields').innerHTML = `
+                <div class="col-span-2"><input type="text" id="ef_r" value="${data.reason}"></div>
+                <div class="col-span-2"><textarea id="ef_n">${data.note || ''}</textarea></div>
+                <div class="col-span-1"><input type="number" id="ef_pln" value="${data.cash}"></div>
+                <div class="col-span-1"><input type="number" id="ef_pk" value="${data.pts}"></div>`;
             document.getElementById('saveEditBtn').onclick = async () => {
-                await db.collection('fines').doc(id).update({ reason: document.getElementById('ef_r').value, note: document.getElementById('ef_n').value.toUpperCase(), cash: parseInt(document.getElementById('ef_pln').value), pts: parseInt(document.getElementById('ef_pk').value) });
+                await db.collection('fines').doc(id).update({ reason: document.getElementById('ef_r').value.toUpperCase(), note: document.getElementById('ef_n').value.toUpperCase(), cash: parseInt(document.getElementById('ef_pln').value), pts: parseInt(document.getElementById('ef_pk').value) });
                 closeEdit(); fullOmniSearch();
             };
             document.getElementById('editModal').classList.remove('hidden');
@@ -578,21 +573,18 @@ function openEditVehicle(id, data) {
 
         function openEditCharge(id, data) {
             document.getElementById('editModalTitle').innerText = "Korekta Zarzutu";
-            document.getElementById('editFields').innerHTML = `<div class="col-span-2"><input type="text" id="ez_t" value="${data.title}"></div><div class="col-span-2"><textarea id="ez_d">${data.desc}</textarea></div>`;
+            document.getElementById('editFields').innerHTML = `
+                <div class="col-span-2"><input type="text" id="ez_t" value="${data.title}"></div>
+                <div class="col-span-2"><textarea id="ez_d" class="h-32">${data.desc}</textarea></div>`;
             document.getElementById('saveEditBtn').onclick = async () => {
-                await db.collection('charges').doc(id).update({ title: document.getElementById('ez_t').value, desc: document.getElementById('ez_d').value.toUpperCase() });
+                await db.collection('charges').doc(id).update({ title: document.getElementById('ez_t').value.toUpperCase(), desc: document.getElementById('ez_d').value.toUpperCase() });
                 closeEdit(); fullOmniSearch();
             };
             document.getElementById('editModal').classList.remove('hidden');
         }
-
         function delRec(c, id) { if(confirm("CZY NA PEWNO CHCESZ TRWALE USUNĄĆ TEN WPIS Z BAZY DANYCH?")) { db.collection(c).doc(id).delete(); fullOmniSearch(); } }
         
         lucide.createIcons();
     </script>
 </body>
 </html>
-
-
-
-
