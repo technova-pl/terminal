@@ -3,76 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polityka Prywatności - POL-DRIVE TERMINAL</title>
+    <title>Polityka Prywatności | POL-DRIVE TERMINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
-        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f1f5f9; line-height: 1.6; }
-        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        h1, h2 { color: #3b82f6; font-weight: 900; text-transform: uppercase; }
-        strong { color: #fff; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #010409; color: #e6edf3; line-height: 1.8; }
+        .legal-wrapper { background: rgba(13, 17, 23, 0.98); border: 1px solid #30363d; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        h1, h2, h3 { color: #58a6ff; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; }
+        .section-num { color: #8b949e; font-family: monospace; font-size: 0.9rem; margin-bottom: 0.5rem; display: block; }
+        strong { color: #ffffff; }
+        .alert-box { border-left: 4px solid #d29922; background: rgba(210, 153, 34, 0.1); padding: 1.5rem; margin: 2rem 0; border-radius: 0 1rem 1rem 0; }
+        .status-badge { background: #238636; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; }
+        ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        ul li::before { content: "▹"; position: absolute; left: 0; color: #58a6ff; }
     </style>
 </head>
-<body class="p-6 md:p-12">
-    <div class="max-w-4xl mx-auto glass p-8 md:p-12 rounded-[2rem] shadow-2xl">
-        <h1 class="text-3xl mb-6 italic tracking-tighter">Polityka Prywatności <span class="text-white text-xl">POL-DRIVE 22.12</span></h1>
+<body class="p-4 md:p-12 lg:p-20">
+    <div class="max-w-6xl mx-auto legal-wrapper p-8 md:p-20 rounded-[2.5rem]">
         
-        <p class="mb-8 text-slate-400 text-sm">Ostatnia aktualizacja: 4 lutego 2026 r.</p>
+        <header class="border-b border-white/10 pb-12 mb-12">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-5xl mb-2 italic">Polityka Prywatności</h1>
+                    <p class="text-slate-400 font-medium">POL-DRIVE <span class="status-badge">TERMINAL</span></p>
+                </div>
+                <div class="text-right hidden md:block">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest">Obowiązuję od 4 luty 2026 r.</p>
+                    <p class="font-bold text-sm">Ostatnia aktualizacja: 4.02.2026 r.</p>
+                </div>
+            </div>
+        </header>
 
-        <section class="mb-8">
-            <h2 class="text-xl mb-4">1. Informacje ogólne</h2>
-            <p>Niniejsza Polityka Prywatności określa zasady przetwarzania i ochrony danych osobowych użytkowników (funkcjonariuszy) oraz osób, których dane są wprowadzane do systemu POL-DRIVE (obywateli). System działa zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 (RODO).</p>
-        </section>
+        <main class="space-y-16">
+            
+            <section>
+                <span class="section-num">PARAGRAF PIERWSZY</span>
+                <h2>§1. Definicje Systemowe</h2>
+                <p>Na potrzeby niniejszej polityki przyjmuje się następujące definicje:</p>
+                <ul class="mt-4">
+                    <li><strong>System:</strong> Oprogramowanie POL-DRIVE TERMINAL służące do ewidencji zdarzeń i osób.</li>
+                    <li><strong>Użytkownik:</strong> Autoryzowany funkcjonariusz posiadający dostęp do panelu administracyjnego.</li>
+                    <li><strong>Obywatel:</strong> Podmiot danych, którego informacje są przetwarzane w kartotece.</li>
+                    <li><strong>Incydent:</strong> Zdarzenie prowadzące do przypadkowego lub niezgodnego z prawem zniszczenia, utraty lub nieuprawnionego ujawnienia danych.</li>
+                </ul>
+            </section>
 
-        <section class="mb-8">
-            <h2 class="text-xl mb-4">2. Administrator Danych</h2>
-            <p>Administratorem danych osobowych przetwarzanych w systemie jest <strong>[WPISZ NAZWĘ JEDNOSTKI/SERWERA LUB WŁAŚCICIELA]</strong>. W sprawach związanych z ochroną danych można kontaktować się pod adresem e-mail: <strong>[WPISZ E-MAIL KONTAKTOWY]</strong>.</p>
-        </section>
+            <section>
+                <span class="section-num">PARAGRAF DRUGI</span>
+                <h2>§2. Szczegółowe Podstawy Przetwarzania</h2>
+                <p>Administrator przetwarza dane osobowe w oparciu o następujące przesłanki prawne:</p>
+                <div class="grid md:grid-cols-2 gap-8 mt-6">
+                    <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                        <h3 class="text-sm mb-2 italic">Art. 6 ust. 1 lit. c RODO</h3>
+                        <p class="text-xs text-slate-400">Przetwarzanie jest niezbędne do wypełnienia obowiązku prawnego ciążącego na Administratorze w zakresie prowadzenia dokumentacji służbowej i porządkowej.</p>
+                    </div>
+                    <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                        <h3 class="text-sm mb-2 italic">Art. 6 ust. 1 lit. f RODO</h3>
+                        <p class="text-xs text-slate-400">Prawnie uzasadniony interes Administratora polegający na zapewnieniu bezpieczeństwa użytkowników systemu oraz ochrony mienia.</p>
+                    </div>
+                </div>
+            </section>
 
-        <section class="mb-8">
-            <h2 class="text-xl mb-4">3. Zakres i cel zbierania danych</h2>
-            <p>System przetwarza dane w celu prowadzenia ewidencji zdarzeń drogowych, rejestracji pojazdów oraz zarządzania bazą osób poszukiwanych. Dane obejmują:</p>
-            <ul class="list-disc ml-6 mt-2 text-slate-300">
-                <li><strong>Dane funkcjonariuszy:</strong> login, identyfikator, hasło (zaszyfrowane).</li>
-                <li><strong>Dane obywateli:</strong> imię, nazwisko, numer PESEL, adres zameldowania, status posiadania broni, historia mandatów i zarzutów.</li>
-                <li><strong>Dane pojazdów:</strong> numer rejestracyjny, marka, kolor, status dokumentów.</li>
-            </ul>
-        </section>
+            <section>
+                <span class="section-num">PARAGRAF TRZECI</span>
+                <h2>§3. Bezpieczeństwo Techniczne i Infrastruktura Chmurowa</h2>
+                <p>System wykorzystuje architekturę <strong>Serverless</strong> opartą o platformę <strong>Google Firebase</strong>. Wdrożono następujące standardy ochrony:</p>
+                <ul class="mt-4 space-y-4">
+                    <li><strong>Szyfrowanie w spoczynku (At-Rest):</strong> Dane w bazie Firestore są szyfrowane przy użyciu standardu AES-256.</li>
+                    <li><strong>Szyfrowanie w transporcie (In-Transit):</strong> Cała komunikacja między przeglądarką użytkownika a bazą danych odbywa się przez bezpieczny protokół HTTPS/TLS 1.3.</li>
+                    <li><strong>Reguły Firestore:</strong> System wykorzystuje rygorystyczne reguły bezpieczeństwa uniemożliwiające odczyt danych bez aktywnego tokenu uwierzytelniającego funkcjonariusza.</li>
+                </ul>
+            </section>
 
-        <section class="mb-8">
-            <h2 class="text-xl mb-4">4. Pliki Cookies i technologie śledzące</h2>
-            <p>System wykorzystuje niezbędne pliki <strong>Cookies</strong> oraz technologię <strong>LocalStorage</strong> w celu:</p>
-            <ul class="list-disc ml-6 mt-2 text-slate-300">
-                <li>Utrzymania sesji zalogowanego funkcjonariusza.</li>
-                <li>Zapamiętania preferencji systemowych (np. akceptacji polityki).</li>
-                <li>Zapewnienia bezpieczeństwa i ochrony przed nieautoryzowanym dostępem.</li>
-            </ul>
-        </section>
+            <section class="alert-box">
+                <span class="section-num">PARAGRAF CZWARTY</span>
+                <h2>§4. Procedura Postępowania w przypadku Naruszeń</h2>
+                <p>1. W przypadku wykrycia naruszenia ochrony danych osobowych, Administrator bez zbędnej zwłoki – w miarę możliwości, nie później niż w terminie 72 godzin po stwierdzeniu naruszenia – zgłasza je organowi nadzorczemu.</p>
+                <p>2. Jeżeli naruszenie może powodować wysokie ryzyko naruszenia praw lub wolności osób fizycznych, Administrator niezwłocznie zawiadamia o tym Obywateli, których dane dotyczą, poprzez dostępne kanały komunikacji.</p>
+            </section>
 
-        <section class="mb-8">
-            <h2 class="text-xl mb-4">5. Przechowywanie danych</h2>
-            <p>Dane są przechowywane w chmurze <strong>Google Firebase</strong>. Zastosowano zaawansowane mechanizmy szyfrowania oraz reguły dostępu (Firestore Security Rules), które uniemożliwiają dostęp osobom postronnym.</p>
-        </section>
+            <section>
+                <span class="section-num">PARAGRAF PIĄTY</span>
+                <h2>§5. Katalog Praw Obywatela i Funkcjonariusza</h2>
+                <p>Każdemu podmiotowi danych przysługuje pełny wachlarz praw wynikający z rozdziału III RODO:</p>
+                <div class="space-y-6 mt-6">
+                    <div class="border-l-2 border-blue-500 pl-6">
+                        <h3 class="text-sm">Prawo do ograniczenia przetwarzania</h3>
+                        <p class="text-xs text-slate-400 italic">Możliwość wstrzymania operacji na danych (np. edycji wpisów) do czasu wyjaśnienia ich poprawności w procedurze odwoławczej.</p>
+                    </div>
+                    <div class="border-l-2 border-blue-500 pl-6">
+                        <h3 class="text-sm">Prawo do niepodlegania zautomatyzowanym decyzjom</h3>
+                        <p class="text-xs text-slate-400 italic">Gwarancja, że żadna sankcja karna (mandat/areszt) nie zostanie nałożona wyłącznie przez algorytm systemu bez ingerencji "czynnika ludzkiego" (funkcjonariusza).</p>
+                    </div>
+                </div>
+            </section>
 
-        <section class="mb-8">
-            <h2 class="text-xl mb-4">6. Prawa użytkowników</h2>
-            <p>Każdej osobie, której dane znajdują się w bazie, przysługuje prawo do:</p>
-            <ul class="list-disc ml-6 mt-2 text-slate-300">
-                <li>Wglądu w swoje dane.</li>
-                <li>Sprostowania danych (jeśli są błędne).</li>
-                <li>Usunięcia danych ("prawo do bycia zapomnianym") – o ile nie stoją przed tym przeszkody prawne (np. toczące się postępowanie).</li>
-                <li>Wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych (PUODO).</li>
-            </ul>
-        </section>
+            <section>
+                <span class="section-num">PARAGRAF SZÓSTY</span>
+                <h2>§6. Powierzenie Przetwarzania Podmiotom Trzecim</h2>
+                <p>Administrator informuje, że w celu zapewnienia ciągłości działania systemu, powierza przetwarzanie danych następującym podmiotom:</p>
+                <ul class="mt-4">
+                    <li><strong>Google Cloud Poland Sp. z o.o.</strong> – w zakresie hostingu bazy danych i uwierzytelniania.</li>
+                    <li><strong>Cloudflare, Inc.</strong> – w zakresie ochrony przed atakami typu DDoS i optymalizacji dostępu.</li>
+                </ul>
+                <p class="mt-4 text-sm">Podmioty te gwarantują standardy ochrony danych zgodne z decyzjami Komisji Europejskiej (Tarcza Prywatności / Standardowe Klauzule Umowne).</p>
+            </section>
 
-        <section class="mb-8">
-            <h2 class="text-xl mb-4">7. Kontakt</h2>
-            <p>Wszelkie zapytania dotyczące prywatności należy kierować poprzez wewnętrzny system zgłoszeń lub na adres e-mail podany w punkcie 2.</p>
-        </section>
+            <section class="border-t border-white/10 pt-10">
+                <span class="section-num">PARAGRAF SIÓDMY</span>
+                <h2>§7. Zmiany w Polityce i Postanowienia Końcowe</h2>
+                <p>1. Administrator zastrzega sobie prawo do aktualizacji niniejszej Polityki w przypadku zmian w architekturze systemu lub zmianach w przepisach prawa powszechnie obowiązującego.</p>
+                <p>2. Wszelkie zmiany wchodzą w życie z dniem ich opublikowania w interfejsie logowania systemu POL-DRIVE.</p>
+                <p>3. W sprawach nieuregulowanych niniejszą Polityką mają zastosowanie przepisy Kodeksu Cywilnego oraz RODO.</p>
+            </section>
+        </main>
 
-        <div class="mt-12 text-center">
-            <button onclick="window.history.back()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-2xl transition-all">Powrót do Systemu</button>
-        </div>
+        <footer class="mt-20 text-center space-y-4">
+            <p class="text-xs text-slate-500 uppercase tracking-[0.3em]">System Authentication Protocol: Secured via Firebase Auth</p>
+            <div class="flex justify-center gap-4">
+                <button onclick="window.print()" class="text-[10px] font-bold border border-white/20 px-4 py-2 rounded-lg hover:bg-white/10 transition-all">DRUKUJ KOPIĘ PDF</button>
+                <button onclick="window.history.back()" class="text-[10px] font-bold bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500 transition-all">POWIERDŹ I WRÓĆ</button>
+            </div>
+        </footer>
     </div>
 </body>
 </html>
