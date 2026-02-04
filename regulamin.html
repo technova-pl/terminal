@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulamin Systemu | POL-DRIVE TERMINAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=JetBrains+Mono&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #cbd5e1; line-height: 1.8; }
+        .reg-container { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); }
+        h1, h2 { color: #3b82f6; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; }
+        h3 { color: #f1f5f9; font-weight: 700; margin-top: 1.5rem; }
+        .art-box { border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 2rem; margin-bottom: 2rem; }
+        .law-text { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #94a3b8; }
+        strong { color: #fff; }
+    </style>
+</head>
+<body class="p-4 md:p-12 lg:p-20 bg-slate-950">
+    <div class="max-w-5xl mx-auto reg-container p-8 md:p-16 rounded-[3rem] shadow-2xl">
+        
+        <header class="text-center mb-16 border-b border-white/10 pb-10">
+            <h1 class="text-4xl md:text-5xl italic tracking-tighter mb-4">Regulamin Systemu</h1>
+            <p class="text-blue-500 font-black uppercase tracking-widest text-sm">POL-DRIVE | TERMINAL</p>
+            <p class="mt-4 text-xs text-slate-500">Data wejścia w życie: 4 lutego 2026 r.</p>
+        </header>
+
+        <main>
+            <section class="art-box">
+                <h2>Art. 1: Postanowienia Ogólne</h2>
+                <p>1. Niniejszy regulamin określa zasady korzystania z <strong>POL-DRIVE TERMINAL</strong>, zwanego dalej „Systemem”.</p>
+                <p>2. System przeznaczony jest wyłącznie dla autoryzowanych funkcjonariuszy <strong>TECHNOVA</strong>.</p>
+                <p>3. Każdy użytkownik logujący się do Systemu oświadcza, że zapoznał się z treścią regulaminu i zobowiązuje się do jego przestrzegania.</p>
+            </section>
+
+            <section class="art-box">
+                <h2>Art. 2: Odpowiedzialność Użytkownika</h2>
+                <p>1. Użytkownik ponosi pełną odpowiedzialność za wszelkie działania wykonane przy użyciu jego unikalnego identyfikatora (Login/ID).</p>
+                <p>2. Zabrania się udostępniania danych dostępowych osobom trzecim. Wykrycie współdzielenia konta skutkuje natychmiastową blokadą dostępu.</p>
+                <p>3. Użytkownik jest zobowiązany do wprowadzania danych zgodnych z prawdą i faktycznym stanem czynności służbowych.</p>
+            </section>
+
+            <section class="art-box">
+                <h2>Art. 3: Zarządzanie Danymi</h2>
+                <p>1. Wprowadzanie wpisów do kartoteki (mandaty, zarzuty, pojazdy) jest rejestrowane w logach systemowych wraz z sygnaturą czasową.</p>
+                <p>2. Nieuzasadnione usuwanie wpisów z bazy danych bez zgody przełożonego lub Administratora jest traktowane jako działanie na szkodę Systemu.</p>
+                <p>3. Administrator zastrzega sobie prawo do weryfikacji i korekty dowolnego wpisu w celu zachowania spójności bazy danych.</p>
+            </section>
+
+            <section class="art-box">
+                <h2>Art. 4: Zakazy i Ograniczenia Techniczne</h2>
+                <p>1. Bezwzględnie zabrania się:</p>
+                <ul class="list-disc ml-6 space-y-2 mt-2">
+                    <li>Prób nieautoryzowanego przejęcia uprawnień administracyjnych (SQL Injection, XSS, Brute-force).</li>
+                    <li>Używania zewnętrznego oprogramowania modyfikującego działanie interfejsu Systemu.</li>
+                    <li>Kopiowania całości lub fragmentów bazy danych poza infrastrukturę POL-DRIVE.</li>
+                </ul>
+            </ul>
+            </section>
+
+            <section class="art-box">
+                <h2>Art. 5: Tajemnica Służbowa</h2>
+                <p>1. Informacje zawarte w Systemie, w szczególności dane osobowe obywateli, numery PESEL oraz adresy zameldowania, stanowią <strong>tajemnicę służbową</strong>.</p>
+                <p>2. Ujawnienie danych z kartoteki osobom nieuprawnionym (w tym osobom postronnym na serwerze) grozi wydaleniem ze struktur oraz sankcjami przewidzianymi w wewnętrznym statucie jednostki.</p>
+            </section>
+
+            <section class="art-box">
+                <h2>Art. 6: Gwarancja i Dostępność</h2>
+                <p>1. System POL-DRIVE jest udostępniany w formule „as is” (takim, jakim jest). Administrator nie gwarantuje 100% bezawaryjności w przypadku prac konserwacyjnych platformy Firebase.</p>
+                <p>2. Administrator zastrzega sobie prawo do czasowego wyłączenia Systemu w celu aktualizacji protokołów bezpieczeństwa.</p>
+            </section>
+
+            <div class="bg-blue-600/10 p-6 rounded-2xl border border-blue-600/30">
+                <p class="law-text text-center uppercase font-bold tracking-widest">
+                    Złamanie postanowień niniejszego regulaminu wiąże się z automatycznym cofnięciem uprawnień dostępowych przez system ochrony POL-DRIVE Security.
+                </p>
+            </div>
+        </main>
+
+        <footer class="mt-12 flex justify-between items-center">
+            <button onclick="window.history.back()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl transition-all">
+                Cofnij
+            </button>
+            <p class="text-[10px] text-slate-500 font-mono italic">SYGNATURA DOKUMENTU: PD-REG-2026</p>
+        </footer>
+    </div>
+</body>
+</html>
