@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+    <meta charset="UTF-8">
 <meta charset="UTF-8">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8K2K9PDZ99"></script>
@@ -13,9 +14,9 @@
 </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POL-DRIVE | TERMINAL</title>
-    <meta name="description" content="POL-DRIVE - Zintegrowany system operacyjny do zarządzania kartoteką obywateli, pojazdów i dynamicznym taryfikatorem mandatów.">
+<meta name="description" content="POL-DRIVE - Zintegrowany system operacyjny do zarządzania kartoteką obywateli, pojazdów i dynamicznym taryfikatorem mandatów.">
     <meta property="og:type" content="website">
-<meta property="og:title" content="POL-DRIVE | TERMINAL">
+<meta property="og:title" content="POL-DRIVE|TERMINAL">
 <meta property="og:description" content="Centralna baza danych obywateli i pojazdów z systemem dynamicznych mandatów i zarzutów.">
 <meta property="og:image" content="ikona.png">
 <link rel="icon" type="image/png" href="ikona.png">    
@@ -49,7 +50,7 @@
 
     <div id="auth-screen" class="min-h-screen flex flex-col items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900 to-black">
         <div class="glass p-10 rounded-[3rem] w-full max-w-md shadow-2xl mb-6 text-center">
-            <h1 class="text-4xl font-black italic text-white tracking-tighter mb-10">POL-DRIVE<span class="text-blue-500"> TERMINAL</span></h1>
+            <h1 class="text-4xl font-black italic text-white tracking-tighter mb-10">POL-DRIVE<span class="text-blue-500">TERMINAL</span></h1>
             <div id="login-form" class="space-y-4">
                 <input type="text" id="login-user" placeholder="ID Funkcjonariusza">
                 <input type="password" id="login-pass" placeholder="Klucz dostępu">
@@ -91,7 +92,7 @@
 
     <div id="main-interface" class="hidden">
         <nav class="glass mx-4 my-4 rounded-2xl p-4 px-10 flex justify-between items-center sticky top-4 z-50">
-            <h1 class="font-black text-white italic text-xl tracking-tighter">POL-DRIVE <span class="text-blue-500 text-sm"> TERMINAL</span></h1>
+            <h1 class="font-black text-white italic text-xl tracking-tighter">POL-DRIVE <span class="text-blue-500 text-sm">TERMINAL</span></h1>
             <div class="flex gap-8 text-[11px] font-bold uppercase tracking-widest text-slate-400">
                 <button onclick="switchTab('p-search')" id="btn-search" class="tab-active">Kartoteka</button>
                 <button onclick="switchTab('p-records')" id="btn-records">Wystaw Wpis</button>
@@ -132,6 +133,13 @@
                     <textarea id="rv_desc" placeholder="DODATKOWE INFORMACJE O POJEŹDZIE" class="h-24"></textarea>
                     <button onclick="saveVehicle()" class="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase mt-4">Zarejestruj</button>
                 </div>
+<div class="mt-4">
+    <label class="text-[10px] font-bold opacity-50 ml-2 uppercase tracking-widest">Status Dokumentów</label>
+    <select id="rv_document" class="mt-1">
+        <option value="Posiadany" selected>Dowód Rejestracyjny: POSIADANY</option>
+        <option value="Zatrzymany">Dowód Rejestracyjny: ZATRZYMANY</option>
+    </select>
+</div>
             </div>
 
             <div id="p-records" class="tab-content hidden grid md:grid-cols-2 gap-8">
@@ -253,7 +261,7 @@
     </div>
 
     <script>
-        const UNIT_SECRET_CODE = "LSPD2026";
+        const UNIT_SECRET_CODE = "LSPD2024";
         const firebaseConfig = {
             apiKey: "AIzaSyBMptS-QWhs66yFbn8I-Ho5wIe9hP5Zk08",
             authDomain: "baza-pol-drive.firebaseapp.com",
@@ -375,22 +383,33 @@ window.addEventListener('DOMContentLoaded', () => {
 
                     <div class="space-y-4">
                         <h3 class="text-[10px] opacity-40 uppercase font-black tracking-widest pl-2">Garaż / Pojazdy</h3>
-                        ${vehs.docs.map(v => {
+${vehs.docs.map(v => {
                             const vd = v.data();
-                            return `<div class="bg-white/5 p-5 rounded-3xl border border-white/5 group relative overflow-hidden">
-                                <div class="flex justify-between items-center relative z-10">
-                                    <b class="text-blue-400 font-mono text-xl">${vd.plate}</b>
-                                    ${!isCitizen ? `<div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                        <button onclick='openEditVehicle("${v.id}", ${JSON.stringify(vd)})' class="bg-blue-500/20 p-2 rounded-lg text-blue-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                                        <button onclick='delRec("vehicles", "${v.id}")' class="bg-red-500/20 p-2 rounded-lg text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </div>` : ''}
+                            const isSeized = vd.documentStatus === 'Zatrzymany';
+                            return `
+                                <div class="bg-white/5 p-4 rounded-2xl border ${isSeized ? 'border-red-500/50' : 'border-white/5'} mb-2 group relative">
+                                    <div class="flex justify-between items-start">
+                                        <b class="text-blue-400 text-lg">${vd.plate}</b>
+                                        <span class="text-[9px] font-bold px-2 py-1 rounded ${isSeized ? 'bg-red-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}">
+                                            ${vd.documentStatus || 'Posiadany'}
+                                        </span>
+                                    </div>
+                                    <p class="text-[10px] opacity-60">${vd.brand || 'Nieznany'} (${vd.color || 'Brak'})</p>
+                                    <div class="absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button onclick='openEditVehicle("${v.id}", ${JSON.stringify(vd)})' class="text-blue-400"><i data-lucide="edit-3" class="w-4"></i></button>
+                                        <button onclick='delRec("vehicles", "${v.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-4"></i></button>
+                                    </div>
                                 </div>
-                                <p class="text-[11px] font-bold mt-2 uppercase text-slate-300">${vd.brand} • ${vd.color}</p>
-                                <p class="text-[9px] opacity-40 mt-1 italic">${vd.desc || ''}</p>
-                            </div>`;
-                        }).join('') || '<p class="opacity-20 italic text-sm pl-2">Brak zarejestrowanych pojazdów</p>'}
+                            `;
+                        }).join('') || '<p class="opacity-20 italic">Brak pojazdów</p>'}
+                    </div><div class="space-y-4">
+                        <h3 class="text-[10px] opacity-40 uppercase font-black">Kartoteka</h3>
+                        ${charges.docs.map(z => `<div class="bg-orange-500/5 p-3 rounded-xl border border-orange-500/20 text-[10px] mb-2 group">
+                            <div class="flex justify-between"><b>${z.data().title}</b><div class="opacity-0 group-hover:opacity-100"><button onclick='openEditCharge("${z.id}", ${JSON.stringify(z.data())})' class="text-blue-400 mr-2"><i data-lucide="edit-3" class="w-3"></i></button><button onclick='delRec("charges", "${z.id}")' class="text-red-500"><i data-lucide="trash-2" class="w-3"></i></button></div></div>
+                            <p class="opacity-60">${z.data().desc}</p>
+                        </div>`).join('')}
                     </div>
-
+                </div>
                     <div class="space-y-4">
                         <h3 class="text-[10px] opacity-40 uppercase font-black tracking-widest pl-2">Historia Karno-Sądowa</h3>
                         <div class="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
@@ -454,14 +473,23 @@ window.addEventListener('DOMContentLoaded', () => {
             alert("Obywatel dodany do bazy."); clearForms(['rc_name', 'rc_surname', 'rc_pesel', 'rc_dob', 'rc_address']);
         }
 
-        async function saveVehicle() {
-            const p = document.getElementById('rv_plate').value.toUpperCase().trim();
-            const o = document.getElementById('rv_owner').value.trim();
-            if(!p || !o) return alert("BŁĄD: TABLICE I WŁAŚCICIEL WYMAGANI.");
-            await db.collection('vehicles').add({ plate: p, owner: o, brand: document.getElementById('rv_brand').value.toUpperCase(), color: document.getElementById('rv_color').value.toUpperCase(), desc: document.getElementById('rv_desc').value.toUpperCase() });
-            alert("Pojazd zarejestrowany."); clearForms(['rv_plate', 'rv_owner', 'rv_brand', 'rv_color', 'rv_desc']);
-        }
+async function saveVehicle() {
+    const p = document.getElementById('rv_plate').value.toUpperCase().trim();
+    const o = document.getElementById('rv_owner').value.trim();
+    const docStatus = document.getElementById('rv_document').value;
 
+    await db.collection('vehicles').add({ 
+        plate: p, 
+        owner: o, 
+        brand: document.getElementById('rv_brand').value.toUpperCase(), 
+        color: document.getElementById('rv_color').value.toUpperCase(), 
+        desc: document.getElementById('rv_desc').value.toUpperCase(),
+        documentStatus: docStatus // Dodane pole
+    });
+
+    alert("Pojazd zarejestrowany."); 
+    clearForms(['rv_plate', 'rv_owner', 'rv_brand', 'rv_color', 'rv_desc']);
+}
         async function saveFine() {
             const target = document.getElementById('f_p').value.trim();
             const r = document.getElementById('f_type').value;
@@ -505,16 +533,30 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('editModal').classList.remove('hidden');
         }
 
-        function openEditVehicle(id, data) {
-            document.getElementById('editModalTitle').innerText = "Edycja Pojazdu: " + data.plate;
-            document.getElementById('editFields').innerHTML = `<div class="col-span-2"><input type="text" id="ev_plate" value="${data.plate}"></div><input type="text" id="ev_brand" value="${data.brand}"><input type="text" id="ev_color" value="${data.color}"><div class="col-span-2"><textarea id="ev_desc">${data.desc}</textarea></div>`;
-            document.getElementById('saveEditBtn').onclick = async () => {
-                await db.collection('vehicles').doc(id).update({ plate: document.getElementById('ev_plate').value.toUpperCase(), brand: document.getElementById('ev_brand').value.toUpperCase(), color: document.getElementById('ev_color').value.toUpperCase(), desc: document.getElementById('ev_desc').value.toUpperCase() });
-                closeEdit(); fullOmniSearch();
-            };
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
+function openEditVehicle(id, data) {
+    document.getElementById('editModalTitle').innerText = "Modyfikacja Pojazdu";
+    document.getElementById('editFields').innerHTML = `
+        <div class="col-span-2"><input type="text" id="ev_p" value="${data.plate}" placeholder="Tablice"></div>
+        <div class="col-span-2">
+            <select id="ev_doc">
+                <option value="Posiadany" ${data.documentStatus === 'Posiadany' ? 'selected' : ''}>Dowód: POSIADANY</option>
+                <option value="Zatrzymany" ${data.documentStatus === 'Zatrzymany' ? 'selected' : ''}>Dowód: ZATRZYMANY</option>
+            </select>
+        </div>
+        <div class="col-span-2"><textarea id="ev_d" placeholder="Opis">${data.desc || ''}</textarea></div>
+    `;
+    
+    document.getElementById('saveEditBtn').onclick = async () => {
+        await db.collection('vehicles').doc(id).update({ 
+            plate: document.getElementById('ev_p').value.toUpperCase(),
+            documentStatus: document.getElementById('ev_doc').value,
+            desc: document.getElementById('ev_d').value.toUpperCase()
+        });
+        closeEdit(); 
+        fullOmniSearch();
+    };
+    document.getElementById('editModal').classList.remove('hidden');
+}
         function openEditFine(id, data) {
             document.getElementById('editModalTitle').innerText = "Korekta Mandatu";
             document.getElementById('editFields').innerHTML = `<div class="col-span-2"><input type="text" id="ef_r" value="${data.reason}"></div><div class="col-span-2"><textarea id="ef_n">${data.note || ''}</textarea></div><input type="number" id="ef_pln" value="${data.cash}"><input type="number" id="ef_pk" value="${data.pts}">`;
@@ -541,6 +583,3 @@ window.addEventListener('DOMContentLoaded', () => {
     </script>
 </body>
 </html>
-
-
-
