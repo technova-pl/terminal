@@ -33,7 +33,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=JetBrains+Mono&display=swap');
         body { font-family: 'Outfit', sans-serif; background: #020617; color: #f1f5f9; min-height: 100vh; overflow-x: hidden; }
@@ -62,16 +62,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-500/20">
             <i data-lucide="smartphone" class="text-white w-8 h-8"></i>
         </div>
-        <h2 class="text-2xl font-black uppercase tracking-tighter">Weryfikacja Tożsamości</h2>
+        <h2 class="text-2xl font-black uppercase tracking-tighter">Weryfikacja Tożsamości</h2> 
+<div id="auth-overlay" class="fixed inset-0 z-[100] bg-black flex items-center justify-center p-6">
+    <div class="glass p-8 rounded-[3rem] max-w-md w-full border border-blue-500/30 text-center space-y-6">
+        <h2 class="text-2xl font-black uppercase tracking-tighter">Autoryzacja Systemowa</h2>
         
-        <div id="phone-step" class="space-y-4">
-            <input type="tel" id="phoneNumber" placeholder="+48 123 456 789" 
-                class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-center text-xl font-mono focus:border-blue-500 outline-none">
-            <div id="recaptcha-container"></div> <button onclick="sendSmsCode()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase tracking-widest transition-all">
-                Wyślij Kod SMS
-            </button>
+        <div id="phone-container">
+            <input type="tel" id="phoneNumber" placeholder="+48 123 456 789" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-center text-xl mb-4">
+            <div id="recaptcha-container"></div> <button onclick="handleSmsSend()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase">Wyślij Kod</button>
         </div>
 
+        <div id="code-container" class="hidden">
+            <input type="text" id="smsCode" placeholder="KOD SMS" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-center text-2xl font-black tracking-widest mb-4">
+            <button onclick="handleSmsVerify()" class="w-full bg-emerald-600 py-4 rounded-2xl font-black uppercase">Zaloguj</button>
+        </div>
+    </div>
+</div>
         <div id="code-step" class="hidden space-y-4">
             <p class="text-xs text-slate-400">Wprowadź 6-cyfrowy kod wysłany na Twój telefon</p>
             <input type="text" id="verificationCode" placeholder="000000" maxlength="6"
@@ -312,52 +318,43 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const n = new Date();
             return n.toLocaleDateString('pl-PL') + " | " + n.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
         }
-// FUNKCJA: WYSYŁANIE SMS
-async function sendSmsCode() {
-    let phone = document.getElementById('phoneNumber').value.trim();
-    
-    // Automatyczne dodawanie +48 jeśli użytkownik zapomni
-    if(!phone.startsWith('+')) {
-        phone = '+48' + phone;
-    }
-
-    const appVerifier = window.recaptchaVerifier;
-
-    firebase.auth().signInWithPhoneNumber(phone, appVerifier)
-        .then((result) => {
-            window.confirmationResult = result;
-            document.getElementById('phone-step').classList.add('hidden');
-            document.getElementById('code-step').classList.remove('hidden');
-            alert("KOD ZOSTAŁ WYSŁANY!");
-        }).catch((error) => {
-            console.error(error);
-            alert("BŁĄD WYSYŁKI: " + error.message);
-            // Jeśli reCAPTCHA wygaśnie, zresetuj ją
-            if(window.recaptchaVerifier) window.recaptchaVerifier.render();
-        });
-}
-// FUNKCJA: WERYFIKACJA KODU
-async function verifySmsCode() {
-    const code = document.getElementById('verificationCode').value;
-
-    confirmationResult.confirm(code).then((result) => {
-        // SUKCES - Logowanie poprawne
-        document.getElementById('login-overlay').classList.add('hidden');
-        document.getElementById('off-display').innerText = "ZALOGOWANO: OBYWATEL";
-        alert("Weryfikacja zakończona sukcesem. Witaj w systemie.");
-    }).catch((error) => {
-        alert("Niepoprawny kod SMS!");
-    });
-}
+// 1. Inicjalizacja ReCAPTCHA (Bez tego SMS nie wyjdzie)
 window.onload = function() {
-    // Tworzy niewidzialny weryfikator
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response) => {
-            // ReCAPTCHA rozwiązana
-        }
+        'size': 'invisible'
     });
 };
+
+let confirmationResult;
+
+// 2. Funkcja wysyłania
+async function handleSmsSend() {
+    let phone = document.getElementById('phoneNumber').value.trim();
+    if(!phone.startsWith('+')) phone = '+48' + phone; // Auto-poprawka numeru
+
+    try {
+        confirmationResult = await firebase.auth().signInWithPhoneNumber(phone, window.recaptchaVerifier);
+        document.getElementById('phone-container').classList.add('hidden');
+        document.getElementById('code-container').classList.remove('hidden');
+        alert("KOD ZOSTAŁ WYSŁANY!");
+    } catch (error) {
+        alert("BŁĄD: " + error.message);
+        console.error(error);
+    }
+}
+
+// 3. Funkcja weryfikacji
+async function handleSmsVerify() {
+    const code = document.getElementById('smsCode').value;
+    try {
+        await confirmationResult.confirm(code);
+        document.getElementById('auth-overlay').classList.add('hidden'); // Odblokuj terminal
+        document.getElementById('off-display').innerText = "ID: ZALOGOWANO PRZEZ SMS";
+        alert("ZALOGOWANO POMYŚLNIE");
+    } catch (error) {
+        alert("BŁĘDNY KOD SMS!");
+    }
+}
 // FUNKCJA AKCEPTACJI COOKIES
 function acceptCookies() {
     localStorage.setItem('cookiesAccepted', 'true');
